@@ -2,21 +2,25 @@
 import numpy as np
 import copy
 import openpyxl
+import time
+from openpyxl.styles import Font, Alignment
 
 
 # CONSTANTS
-MATCHES = [["A", "B"], ["C", "D"]]
+MATCHES = [['RYU', 'GMY'], ['GMY', 'UTE'], ['LEM', 'RYU'], ['300', 'LEM']]
 DELTA_SCORE = [[[2, 0], [0, 2]], [[0, 2], [2, 0]], [[1, 1], [1, 1]]]
 OUTCOME_DICTIONARY = {"0": "#0", "1": "#1", "2": "DRAW"}
-STANDING = {"A": [0, 0], "B": [0, 0], "C": [0, 0], "D": [0, 0]}
+STANDING = {'300': [7, 1], 'GMY': [4, 2], 'RYU': [4, 2], 'LEM': [
+    4, 2], 'DRP': [3, 7], 'UTE': [0, 8], 'PP': [0, 10], 'DSP': [0, 10]}
 FILTER = True
-MYTEAM = "A"
+MYTEAM = "RYU"
 PLAYOFF_TEAMS = 2
 RELEGATION_TEAMS = 2
 TIEBREAK_PLAYOFFS_COLOR = "3399ff"
 TIEBREAK_RELEGATION_COLOR = "ff5050"
-OUTPUT_FILE = "test.xlsx"
+OUTPUT_FILE = "./out/foldy_sheet.xlsx"
 
+START = time.time()
 
 # GENERATE ALL POSSIBLE OUTCOME CODES
 outcome_codes = []
@@ -107,6 +111,7 @@ for standing in all_possible_standings:
     standing_data = [standing, playoff_data, relegation_data]
     all_possible_standings_data.append(standing_data)
 
+
 # FILTER TIEBREAKER FOR TEAM
 if FILTER:
     for standing_data_index, standing_data in enumerate(all_possible_standings_data):
@@ -130,94 +135,165 @@ if FILTER:
 
 workbook = openpyxl.Workbook()
 sheet = workbook.active
+sheet.title = 'Foldy'
 
+
+# HEADER: TEAM VS TEAM
 for column, match in enumerate(MATCHES, start=1):
-    sheet.cell(row=1, column=column).value = f"{match[0]} VS. {match[1]}"
+    cell = sheet.cell(row=1, column=column)
+    cell.value = f"{match[0]} VS. {match[1]}"
+    cell.font = Font(bold=True, underline='single')
+    cell.alignment = Alignment(horizontal='center')
 
-for column in range(len(STANDING)):
-    sheet.cell(row=1, column=column + len(MATCHES) + 2).value = column + 1
 
-sheet.cell(row=1, column=len(STANDING) + len(MATCHES) + 3).value = f"{MYTEAM} LOCKED?"
+# HEADER: PLACES
+for number in range(len(MATCHES) + 1, len(MATCHES) + 1 + len(STANDING)):
+    cell = sheet.cell(row=1, column=number+1)
+    cell.value = number - len(MATCHES)
+    if (number - len(MATCHES)) <= PLAYOFF_TEAMS:
+        cell.font = Font(underline='single', bold=True)
+    cell.alignment = Alignment(horizontal='center')
 
-starting_row = 2
 
-for standing, outcome_code in zip(all_possible_standings_data, outcome_codes):
-    starting_row += 1
-    for match_index, char in enumerate(outcome_code):
-        cell_string = OUTCOME_DICTIONARY[char]
+# HEADER: TEAM LOCK IN?
+if FILTER:
+    cell = sheet.cell(row=1, column=len(MATCHES) + len(STANDING) + 3)
+    cell.value = f"{MYTEAM} LOCK IN"
+    cell.font = Font(bold=True, underline='single')
+    cell.alignment = Alignment(horizontal='center')
 
-        if OUTCOME_DICTIONARY[char].startswith("#"):
-            cell_string = MATCHES[match_index][int(OUTCOME_DICTIONARY[char][1:])]
 
-        sheet.cell(column=match_index + 1, row=starting_row).value = cell_string
+# FILL OUTCOMES
+for row, standing in enumerate(all_possible_standings_data):
+    code = outcome_codes[row]
 
-        for column, team in enumerate(list(standing[0].keys()), start=len(MATCHES) + 2):
-            sheet.cell(column=column, row=starting_row).value = team
+    for column, c in enumerate(code, start=1):
+        cell = sheet.cell(row=row+3, column=column)
+        cell_string = OUTCOME_DICTIONARY[c]
 
-            teamIndex = list(standing[0].keys()).index(team)
+        if cell_string.startswith('#'):
+            cell_string = cell_string[1:]
+            cell_string = MATCHES[column-1][int(cell_string)]
 
-            playoffs_tiebreak_color = openpyxl.styles.colors.Color(
-                rgb=TIEBREAK_PLAYOFFS_COLOR
-            )
-            playoffs_tiebreak_fill = openpyxl.styles.fills.PatternFill(
-                patternType="solid", fgColor=playoffs_tiebreak_color
-            )
-            playoffs_tiebreak = standing[1]
+        cell.value = cell_string
+        cell.alignment = Alignment(horizontal='center')
 
-            if (
-                playoffs_tiebreak[0]
-                and playoffs_tiebreak[1] <= teamIndex
-                and playoffs_tiebreak[2] >= teamIndex
-            ):
-                sheet.cell(
-                    column=column, row=starting_row
-                ).fill = playoffs_tiebreak_fill
+        if cell_string == MYTEAM and FILTER:
+            cell.font = Font(bold=True, underline='single')
 
-            relegation_tiebreak_color = openpyxl.styles.colors.Color(
-                rgb=TIEBREAK_RELEGATION_COLOR
-            )
-            relegation_tiebreak_fill = openpyxl.styles.fills.PatternFill(
-                patternType="solid", fgColor=relegation_tiebreak_color
-            )
-            relegation_tiebreak = standing[2]
 
-            if (
-                relegation_tiebreak[0]
-                and relegation_tiebreak[1] <= teamIndex
-                and relegation_tiebreak[2] >= teamIndex
-            ):
-                sheet.cell(
-                    column=column, row=starting_row
-                ).fill = relegation_tiebreak_fill
+# FILL STANDING
+for row, standing in enumerate(all_possible_standings_data):
+    for column, team in enumerate(standing[0].keys(), start=len(MATCHES)+2):
+        cell = sheet.cell(row=row+3, column=column)
+        cell.value = team
+        cell.alignment = Alignment(horizontal='center')
 
-for row, standing in enumerate(all_possible_standings_data, start=3):
-    playoffs_tiebreak_color = openpyxl.styles.colors.Color(rgb=TIEBREAK_PLAYOFFS_COLOR)
-    playoffs_tiebreak_fill = openpyxl.styles.fills.PatternFill(
-        patternType="solid", fgColor=playoffs_tiebreak_color
-    )
+        if team == MYTEAM and FILTER:
+            cell.font = Font(bold=True, underline='single')
 
-    yes_color = openpyxl.styles.colors.Color(rgb="00cc00")
-    yes_fill = openpyxl.styles.fills.PatternFill(patternType="solid", fgColor=yes_color)
+        index = column - len(MATCHES) - 2
 
-    no_color = openpyxl.styles.colors.Color(rgb="ff0066")
-    no_fill = openpyxl.styles.fills.PatternFill(patternType="solid", fgColor=no_color)
+        playoffs_tiebreak_color = openpyxl.styles.colors.Color(
+            rgb=TIEBREAK_PLAYOFFS_COLOR
+        )
+        playoffs_tiebreak_fill = openpyxl.styles.fills.PatternFill(
+            patternType="solid", fgColor=playoffs_tiebreak_color
+        )
 
-    lock_string = ""
+        relegation_tiebreak_color = openpyxl.styles.colors.Color(
+            rgb=TIEBREAK_RELEGATION_COLOR
+        )
+        relegation_tiebreak_fill = openpyxl.styles.fills.PatternFill(
+            patternType="solid", fgColor=relegation_tiebreak_color
+        )
 
-    if list(standing[0].keys()).index(MYTEAM) < PLAYOFF_TEAMS:
-        lock_string = "YES"
-        sheet.cell(column=len(STANDING) + len(MATCHES) + 3, row=row).fill = yes_fill
-    else:
-        lock_string = "NO"
-        sheet.cell(column=len(STANDING) + len(MATCHES) + 3, row=row).fill = no_fill
+        if standing[2][0] and index >= standing[2][1] and index <= standing[2][2]:
+            cell.fill = relegation_tiebreak_fill
 
-    if standing[1][0]:
-        lock_string = "TIEBREAK"
-        sheet.cell(
-            column=len(STANDING) + len(MATCHES) + 3, row=row
-        ).fill = playoffs_tiebreak_fill
+        if standing[1][0] and index >= standing[1][1] and index <= standing[1][2]:
+            cell.fill = playoffs_tiebreak_fill
 
-    sheet.cell(column=len(STANDING) + len(MATCHES) + 3, row=row).value = lock_string
 
+# FILL TEAM LOCKIN
+if FILTER:
+    for row, standing in enumerate(all_possible_standings_data, start=3):
+        team_list = list(standing[0].keys())
+        team_index = team_list.index(MYTEAM)
+        cell = sheet.cell(column=len(STANDING)+len(MATCHES)+3, row=row)
+        cell.alignment = Alignment(horizontal='center')
+        cell.font = Font(bold=True)
+
+        playoffs_tiebreak_color = openpyxl.styles.colors.Color(
+            rgb=TIEBREAK_PLAYOFFS_COLOR)
+        playoffs_tiebreak_fill = openpyxl.styles.fills.PatternFill(
+            patternType='solid', fgColor=playoffs_tiebreak_color)
+
+        yes_color = openpyxl.styles.colors.Color(rgb='00cc00')
+        yes_fill = openpyxl.styles.fills.PatternFill(
+            patternType='solid', fgColor=yes_color)
+
+        no_color = openpyxl.styles.colors.Color(rgb='ff0066')
+        no_fill = openpyxl.styles.fills.PatternFill(
+            patternType='solid', fgColor=no_color)
+
+        if team_index < PLAYOFF_TEAMS:
+            cell.value = 'YES'
+            cell.fill = yes_fill
+        else:
+            cell.value = 'NO'
+            cell.fill = no_fill
+
+        if standing[1][0] or standing[2][0]:
+            cell.value = 'TIEBREAK'
+            cell.fill = playoffs_tiebreak_fill
+
+
+if FILTER:
+    all_scenarios = len(OUTCOME_DICTIONARY) ** len(MATCHES)
+    winning_scenarios = 0
+    tiebreak_scenarios = 0
+    loosing_scenarios = 0
+
+    for row in range(all_scenarios):
+        column = 1 + len(MATCHES) + 1 + len(STANDING) + 1
+        val = sheet.cell(row=row+3, column=column).value
+
+        if val == 'YES':
+            winning_scenarios += 1
+
+        if val == 'NO':
+            loosing_scenarios += 1
+
+        if val == 'TIEBREAK':
+            tiebreak_scenarios += 1
+    workbook.create_sheet('Scenarios')
+    sheet = workbook['Scenarios']
+    sheet.cell(row=1, column=2).value = 'H'
+    sheet.cell(row=1, column=3).value = 'h'
+    sheet.cell(row=1, column=2).alignment = Alignment(horizontal='center')
+    sheet.cell(row=1, column=3).alignment = Alignment(horizontal='center')
+    sheet.cell(row=1, column=2).font = Font(bold=True)
+    sheet.cell(row=1, column=3).font = Font(bold=True)
+    sheet.cell(row=2, column=1).value = 'TOTAL SCENARIOS'
+    sheet.cell(row=3, column=1).value = 'LOCK IN'
+    sheet.cell(row=4, column=1).value = 'LOCK OUT'
+    sheet.cell(row=5, column=1).value = 'TIEBREAKER'
+    sheet.cell(row=2, column=1).font = Font(bold=True)
+    sheet.cell(row=3, column=1).font = Font(bold=True)
+    sheet.cell(row=4, column=1).font = Font(bold=True)
+    sheet.cell(row=5, column=1).font = Font(bold=True)
+    sheet.cell(row=2, column=2).value = all_scenarios
+    sheet.cell(row=3, column=2).value = winning_scenarios
+    sheet.cell(row=4, column=2).value = loosing_scenarios
+    sheet.cell(row=5, column=2).value = tiebreak_scenarios
+    sheet.cell(row=2, column=3).value = all_scenarios / all_scenarios
+    sheet.cell(row=3, column=3).value = winning_scenarios / all_scenarios
+    sheet.cell(row=4, column=3).value = loosing_scenarios / all_scenarios
+    sheet.cell(row=5, column=3).value = tiebreak_scenarios / all_scenarios
+
+END = time.time()
+
+print(f"Created Foldy Spreadsheet in {round(END-START,2)} seconds.")
 
 workbook.save(OUTPUT_FILE)
