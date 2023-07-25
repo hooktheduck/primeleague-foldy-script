@@ -6,21 +6,46 @@ import time
 from openpyxl.styles import Font, Alignment
 
 
-# CONSTANTS
+# PLEASE INPUT ALL REMAINING MATCHES HERE
 MATCHES = [['RYU', 'GMY'], ['GMY', 'UTE'], ['LEM', 'RYU'], ['300', 'LEM']]
+
+
+# THE CURRENT STANDING, TEAM:[WINS,LOSSES]
+STANDING = {'300': [7, 1], 'GMY': [4, 2], 'RYU': [4, 2], 'LEM': [4, 2], 'DRP': [3, 7], 'UTE': [0, 8], 'PP': [0, 10], 'DSP': [0, 10]}
+
+
+# THIS INDCIATES THE CHANGE OF SCORE FOR EVERY OUTCOME
+# PER DEFAULT A WIN GRANTS 2 WINS AND 0 DEFEATS FOR THE WINNING TEAM
+# AND 0 WINS AND 2 DEFEATS FOR THE LOOSING TEAM
 DELTA_SCORE = [[[2, 0], [0, 2]], [[0, 2], [2, 0]], [[1, 1], [1, 1]]]
+
+
+# THIS SPECIFIES THE TEXT FOR EVERY OUTCOME
+# PER DEFAULT "0" MEANS THE FIRST TEAM WINS, THEREFORE THE STRING #0 GETS PRINTED
+# STRINGS WITH # AT THE START GET TRANSLATED TO THE TEAM AT THIS POSITION
 OUTCOME_DICTIONARY = {"0": "#0", "1": "#1", "2": "DRAW"}
-STANDING = {'300': [7, 1], 'GMY': [4, 2], 'RYU': [4, 2], 'LEM': [
-    4, 2], 'DRP': [3, 7], 'UTE': [0, 8], 'PP': [0, 10], 'DSP': [0, 10]}
+
+
+# FILTER FOR YOUR TEAM? AND IF SO, WHAT IS YOUR TEAM
 FILTER = True
 MYTEAM = "RYU"
+
+
+# HOW MANY TEAMS WILL REACH PLAYOFFS/RELEGATION
 PLAYOFF_TEAMS = 2
 RELEGATION_TEAMS = 2
+
+
+# COLOR PREFERENCE
 TIEBREAK_PLAYOFFS_COLOR = "3399ff"
 TIEBREAK_RELEGATION_COLOR = "ff5050"
+
+
+# OUTPUT FILE
 OUTPUT_FILE = "./out/foldy_sheet.xlsx"
 
 START = time.time()
+
 
 # GENERATE ALL POSSIBLE OUTCOME CODES
 outcome_codes = []
@@ -80,6 +105,7 @@ for standing in all_possible_standings:
         playoffs_tiebreak_end -= 1
 
     # CHECK FOR RELEGATION TIEBREAKER
+
     if (
         score_list[len(score_list) - RELEGATION_TEAMS - 1]
         == score_list[len(score_list) - RELEGATION_TEAMS]
