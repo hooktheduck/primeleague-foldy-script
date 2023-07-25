@@ -1,25 +1,16 @@
-# FOLDY SHEET GENEATOR (by Hook)
+###Foldy Sheet Generator (by Hook)
+####1. Introduction
+The Foldy Sheet Generator is a script designed to create foldy sheets for tournament brackets. While it is optimized for the German League of Legends League (Primeleague, rules described below), all parameters can be customized to fit other tournament formats. Additionally, an example file for the Primeleague split teams is included.
 
+####2. Primeleague Rules
+The Foldy Sheet Generator is specifically tailored for the German League of Legends League, Primeleague. As a result, the default parameters are pre-configured to align with this particular tournament format. Any changes in the tournament rules will automatically adjust the default parameters accordingly.
 
+The Primeleague format consists of a single round-robin stage, consisting of 2 matches per team. Each match can result in a win, loss, or draw. After all matches are played, the top two teams will qualify for the playoffs. Tiebreakers will always be played, and there are no head-to-head scores.
 
-### 1. Intorduction
+For more detailed information on the Primeleague rules, please visit: [Primeleague Rules](https://www.primeleague.gg/statics/rules_general)
 
-This script can be used, in order to create foldy sheets for tournament brackets. While this script is optimized for the german League of Legends League (Primeleague, rules down below), you can still change all parameters. An example file of my teams primeleague split is also included.
+####3. Usage
+Using the Foldy Sheet Generator requires some knowledge of Python. While a user-interface is currently under development, for now, you can customize the variables by following the comments provided in the code.
 
-
-### 2. Rules of Primleague
-
-As already said, this tool is optimized for the german league of legends league. Therefore all parameters are already set for this specifiy tournament format. The defualt parameters will also change with any change of rules.
-
-The format is a single round robin containing of 2 matches. Therefore two teams can either end their match with win, loose or a draw. After all matches are played the best two teams will qualify for playoffs. Tiebreakers will always be played and there is no head to head score.
-
-For more information: https://www.primeleague.gg/statics/rules_general
-
-### 3. Usage
-
-This script requires some knowledge of python. A User-Interface is in development. The variables you need to change are also described with comments int the code.
-
-### 4. Help
-
-If you need any help please contact me via discord (hooktheduck). I can even create the sheet for you and send it to you via discord.
-
+####4. Help
+If you need any assistance, feel free to contact me via Discord (hooktheduck). I am also available to create the sheet for you and send it via Discord if needed.
